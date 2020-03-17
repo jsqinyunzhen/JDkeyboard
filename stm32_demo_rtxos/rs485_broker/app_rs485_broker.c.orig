@@ -1,0 +1,705 @@
+/**
+  ******************************************************************************
+  * @file    ADC/ADC1_DMA/main.c 
+  * @author  MCD Application Team
+  * @version V3.5.0
+  * @date    08-April-2011
+  * @brief   Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
+  * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
+  * TIME. AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY
+  * DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING
+  * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
+  * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
+  *
+  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
+  ******************************************************************************
+  */ 
+
+/* Includes ------------------------------------------------------------------*/
+#include "stm32f10x.h"
+
+#include "project_config.h"
+
+
+#include "st_printf.h"
+#include "stm32f10x_it.h"
+#include "app_rs485_broker.h"
+#include "cjson_middleware.h"
+
+void app_uart1_rs485_rxtx_io_init(void)
+{
+
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;		
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+}
+ void app_uart1_rs485_rxtx_io_high_is_tx(void)//TX
+ {
+	 GPIO_SetBits(GPIOA, GPIO_Pin_11);
+ 
+ }
+ void app_uart1_rs485_rxtx_io_low_is_rx(void)//RX
+ {
+	 GPIO_ResetBits(GPIOA, GPIO_Pin_11);
+ 
+ }
+
+ 
+
+void app_uart5_rs485_rxtx_io_init(void)
+{
+
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;		
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+}
+ void app_uart5_rs485_rxtx_io_high_is_tx(void)//TX
+ {
+	 GPIO_SetBits(GPIOD, GPIO_Pin_1);
+ 
+ }
+ void app_uart5_rs485_rxtx_io_low_is_rx(void)//RX
+ {
+	 GPIO_ResetBits(GPIOD, GPIO_Pin_1);
+ 
+ }
+ 
+ 
+int uart5_sendchar(char ch)
+{  
+	UART5->SR;
+	USART_SendData(UART5,ch);
+	while(USART_GetFlagStatus(UART5, USART_FLAG_TC)==RESET);
+	
+	return ch;
+}
+
+void uart5_cpusendstring( char *pt,int len)  
+{  
+	 
+	while((*pt) && (len>0))  
+	 {
+			uart5_sendchar(*pt++);  
+			len-- ;
+	 }
+	uart5_sendchar('\r');	 
+	uart5_sendchar('\n');
+
+}  
+uint16_t uart5_cpu_send_data(unsigned char* buffer, uint16_t size)
+{  
+	 
+	while( (size>0))  
+	 {
+			uart5_sendchar(*buffer++);  
+			size-- ;
+	 }
+	 return size;
+}
+
+void uart5_cpu_printf( char *fmt,...)  
+{ 
+	//#if(UART2_TX_DMA == 1)
+	//return;
+	//#endif
+
+	va_list ap;  
+	int len=0;
+	 memset(string,0,LEN);
+	va_start(ap,fmt);  
+
+	len = vsprintf((char*)string,fmt,ap);  //Use It Will Increase the code size, Reduce the efficiency  
+	if((len >0)&&(len <=LEN))
+	{
+	//	UART0_PutStr("len succ ");
+		//"len =%d",len);
+		uart5_cpusendstring((char*)string, len);  
+	}
+	else
+	{
+
+		//uart_sendstring(string, LEN);  
+		
+		//memset(string,0,LEN);
+		//strcpy(string,"len error");
+		//uart_sendstring(string, strlen("len error"));  
+		//snprintf(string,LEN-1,"len =%d error",len);
+
+		uart5_cpusendstring((char*)string, LEN-1);  
+	}
+	va_end(ap);  
+
+}  
+
+void uart5_rec_rs485_response(void)
+{
+	//int ret = 0;
+//	uint8_t len = 0;
+	const char*uart_buf = (const char*)RxBuffer5;
+	uint8_t uart_buf_len = RxCounter5;
+	if(uart_buf ==NULL)
+	{
+		printf("uart_buf ==NULL\r\n");
+		goto out;
+	}
+	if(uart_buf_len ==0)
+	{
+		printf("uart_buf_len ==0\r\n");
+		goto out;
+	}
+	else
+	{
+		printf("uart5 uart_buf_len =%d =%s\r\n",uart_buf_len,uart_buf);
+//UART5 ECHO
+		app_uart5_rs485_rxtx_io_high_is_tx();
+		uart5_cpu_printf("uart5 uart_buf_len =%d =%s\r\n",uart_buf_len,uart_buf);
+		app_uart5_rs485_rxtx_io_low_is_rx();
+	}
+
+out:
+	reset_uart5_rx_buffer();
+
+
+}
+
+void uart1_rec_rs485_response(void)
+{
+	//int ret = 0;
+//	uint8_t len = 0;
+	const char*uart_buf = (const char*)RxBuffer1;
+	uint8_t uart_buf_len = RxCounter1;
+	if(uart_buf ==NULL)
+	{
+		printf("uart_buf ==NULL\r\n");
+		goto out;
+	}
+	if(uart_buf_len ==0)
+	{
+		printf("uart_buf_len ==0\r\n");
+		goto out;
+	}
+	else
+	{
+		printf("uart1 uart_buf_len =%d =%s\r\n",uart_buf_len,uart_buf);
+//UART5 ECHO
+//		app_uart1_rs485_rxtx_io_high_is_tx();
+//		uart5_cpu_printf("uart5 uart_buf_len =%d =%s\r\n",uart_buf_len,uart_buf);
+//		app_uart1_rs485_rxtx_io_low_is_rx();
+
+		
+	}
+
+out:
+	return;
+}
+
+
+#define BREAKER_CRC_POLY (0x01)
+u8 Breaker_CRC8(u8 *ptr, u8 len)
+{
+    u8 i; 
+    u8 crc=0x00; /* 计算的初始crc值 */ 
+
+    while(len--)
+    {
+        crc ^= *ptr++;  /* 每次先与需要计算的数据异或,计算完指向下一数据 */  
+        for (i=8; i>0; --i)   /* 下面这段计算过程与计算一个字节crc一样 */  
+        { 
+            if (crc & 0x80)
+                crc = (crc << 1) ^ BREAKER_CRC_POLY;
+            else
+                crc = (crc << 1);
+        }
+    }
+
+    return (crc); 
+}
+
+/*
+根据命令，id数组，和数据，构造断路器发送帧
+*/
+void Breaker_ConstructTxCmdFrame(Breaker_Frame *frame,u8 cmd,u8 * id,u8 *data,u8 datalen)
+{
+//    u8 i =0;
+    if(frame == 0 || 0 == id)
+    {
+        return;
+    }
+
+    
+    frame->u.frame.head = BREAKER_FRAME_HEAD; 
+    frame->u.frame.len = BREAKER_FRAMELEN;
+    frame->u.frame.cmd = cmd;
+    
+    frame->u.frame.id1 = id[0];
+    frame->u.frame.id2 = id[1];
+    frame->u.frame.id3 = id[2];
+    frame->u.frame.id4 = id[3];
+    
+    if(data == 0 || datalen == 0)
+    {
+        memset(frame->u.buf+7,0,7);
+    }
+    else
+    {
+        memcpy(frame->u.buf+7,data,datalen);
+    }
+    frame->u.frame.crc = Breaker_CRC8(frame->u.buf, sizeof(frame->u.buf)-1);
+    //frame->u.frame.crc = 0xF0;
+    
+}
+rs485_broker_Info cur_rs485_broker_Info[RS485_BROKER_NUM]={0};
+
+void app_rs485_broker_init(void)
+{
+	//mcu_uart_control_init();
+	memset(cur_rs485_broker_Info,0,sizeof(rs485_broker_Info)*RS485_BROKER_NUM);
+
+	//5A 0F A0 00 00 00 05 00 00 00 00 00 00 00 F0 
+	//crc test
+	
+	char cmd[BREAKER_FRAMELEN]={0x5A,0x0F ,0xA1 ,0x00 ,0x00 ,0x00 ,0x05 ,0x00 
+								,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0xF1};
+	char crc= Breaker_CRC8(cmd, BREAKER_FRAMELEN-1);
+	printf("5 frame.crc=0x%02x crc=0x%02x\r\n",cmd[BREAKER_FRAMELEN-1],crc);	
+
+	char cmd1[BREAKER_FRAMELEN]={0x5A,0x0F ,0xA0 ,0x00 ,0x00 ,0x00 ,0x05 ,0x00 
+								,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0xF0};
+	char crc1= Breaker_CRC8(cmd1, BREAKER_FRAMELEN-1);
+	printf("5 ack frame.crc=0x%02x crc=0x%02x\r\n",cmd1[BREAKER_FRAMELEN-1],crc1);	
+	
+	char cmd2[BREAKER_FRAMELEN]={0x5A,0x0F ,0xA1 ,0x00 ,0x00 ,0x00 ,0x04 ,0x00 
+								,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0xF0};
+	char crc2= Breaker_CRC8(cmd2, BREAKER_FRAMELEN-1);
+	printf("4 frame.crc=0x%02x crc=0x%02x\r\n",cmd2[BREAKER_FRAMELEN-1],crc2);	
+	
+
+	char cmd3[BREAKER_FRAMELEN]={0x5A,0x0F ,0xA0 ,0x00 ,0x00 ,0x00 ,0x04 ,0x00 
+								,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0xF1};
+	char crc3= Breaker_CRC8(cmd3, BREAKER_FRAMELEN-1);
+	printf("4 ack frame.crc=0x%02x crc=0x%02x\r\n",cmd3[BREAKER_FRAMELEN-1],crc3);	
+
+	//while(1);
+	
+
+}
+void app_rs485_broker_info_print(void)
+{
+	int i =0;
+	for(i=0;i<RS485_BROKER_NUM;i++)
+	{
+		printf("i=%d used_flag=%d ",i,cur_rs485_broker_Info[i].used_flag);
+		printf("channel_index=%d ",cur_rs485_broker_Info[i].channel_index);
+		printf("broker_port_status=%d ",cur_rs485_broker_Info[i].broker_port_status);
+		printf("id=0x%02x 0x%02x 0x%02x 0x%02x ",
+			cur_rs485_broker_Info[i].id[0],cur_rs485_broker_Info[i].id[1],
+			cur_rs485_broker_Info[i].id[2],cur_rs485_broker_Info[i].id[3]);
+
+		printf("\r\n" );
+	}
+
+
+}
+
+uint8_t app_rs485_broker_id_response_parse(uint8_t*pdata,uint8_t data_len)
+{
+#if 1
+	int i =0;
+	uint8_t* pRxBuffer = pdata;
+	uint8_t crc = 0;
+	Breaker_Frame tx_frame ={0};
+	Breaker_Frame *frame = (Breaker_Frame*) pdata;
+/*
+		u8 head;
+		u8 len;
+		u8 cmd;
+		
+		u8 id1;
+		u8 id2;
+		u8 id3;
+		u8 id4;
+		
+		u8 voltage;
+		u8 current_i;
+		u8 current_d;
+		u8 power_i;
+		u8 power_d;
+		u8 Electricity_i;
+		u8 Electricity_d;
+		
+		//u8 error_code;
+		u8 crc;
+*/
+	printf("frame.head=0x%02x\r\n",frame->u.frame.head );
+	printf("frame.len=0x%02x\r\n",frame->u.frame.len );
+	printf("frame.cmd=0x%02x\r\n",frame->u.frame.cmd );
+	printf("frame.id=0x%02x 0x%02x 0x%02x 0x%02x\r\n",
+		frame->u.frame.id1,frame->u.frame.id2,frame->u.frame.id3,frame->u.frame.id4 );
+	printf("frame.crc=0x%02x\r\n",frame->u.frame.crc );
+	
+	printf("rec:\r\n");
+	for(i=0;i<BREAKER_FRAMELEN;i++)
+	{
+		//printf("%d=0x%02x ",i,*(pRxBuffer+i) );
+		printf("%02x ",*(pRxBuffer+i) );
+	}
+	printf("\r\n");
+
+	if((pRxBuffer[0]== BREAKER_FRAME_HEAD) && (pRxBuffer[1]== BREAKER_FRAMELEN))
+	{
+	
+		if(pRxBuffer[2]== BREAKER_CMD_ReportID)
+		{
+			crc= Breaker_CRC8(frame->u.buf, sizeof(frame->u.buf)-1);
+			if(frame->u.frame.crc !=crc)
+			{
+				printf("frame.crc=0x%02x crc=0x%02x\r\n",frame->u.frame.crc,crc);
+				return 3;
+			}
+		}
+		else
+		{
+			printf("cmd pRxBuffer[2]=0x%x\r\n",pRxBuffer[2]);
+			return 2;
+		}
+		for(i=0;i<RS485_BROKER_NUM;i++)
+		{
+			if(cur_rs485_broker_Info[i].used_flag == 0)
+			{
+				cur_rs485_broker_Info[i].used_flag =1;
+				cur_rs485_broker_Info[i].channel_index=i;
+				cur_rs485_broker_Info[i].broker_port_status=PORT_FREE;//open
+				cur_rs485_broker_Info[i].id[0] =frame->u.frame.id1;
+				cur_rs485_broker_Info[i].id[1] =frame->u.frame.id2;
+				cur_rs485_broker_Info[i].id[2] =frame->u.frame.id3;
+				cur_rs485_broker_Info[i].id[3] =frame->u.frame.id4;
+				break;
+			}
+		}
+
+		Breaker_ConstructTxCmdFrame(&tx_frame,BREAKER_CMD_ReportIDACK,cur_rs485_broker_Info[i].id,NULL,0);
+		
+		printf("Breaker_ConstructTxCmdFrame:\r\n" );
+		printf("frame.head=0x%02x\r\n",tx_frame.u.frame.head );
+		printf("frame.len=0x%02x\r\n",tx_frame.u.frame.len );
+		printf("frame.cmd=0x%02x\r\n",tx_frame.u.frame.cmd );
+		printf("frame.id=0x%02x 0x%02x 0x%02x 0x%02x\r\n",
+			tx_frame.u.frame.id1,tx_frame.u.frame.id2,tx_frame.u.frame.id3,tx_frame.u.frame.id4 );
+		//crc= Breaker_CRC8(frame->u.buf, sizeof(frame->u.buf)-1);
+		//tx_frame.u.frame.crc = crc;
+		printf("frame.crc=0x%02x\r\n",tx_frame.u.frame.crc );
+
+		pRxBuffer = (uint8_t *)&tx_frame;
+		printf("ack:\r\n");
+		for(i=0;i<BREAKER_FRAMELEN;i++)
+		{
+			//printf("%d=0x%02x ",i,*(pRxBuffer+i) );
+			printf("%02x ",*(pRxBuffer+i) );
+		}
+		printf("\r\n");
+		app_uart1_rs485_rxtx_io_high_is_tx();
+		
+		for(i=0;i<BREAKER_FRAMELEN;i++)
+		{
+			
+			uart1_sendchar(*(pRxBuffer+i));
+		}
+
+
+		
+		return 0;
+
+
+	}
+	else
+	{
+		return 1;
+	}
+
+#endif
+
+}
+
+void  app_rs485_broker_test(void)
+{
+	char id[4] ={0,0,0,4};
+	Breaker_Frame tx_frame ={0};
+	uint8_t* pRxBuffer = NULL;
+	int j =0;
+	int i =0;
+	uint32_t flags =0;
+	uint8_t crc =0;
+	uint8_t cmd =BREAKER_CMD_ReportIDACK;
+	#if 1
+	for(j=0;j<8;j++)
+	{
+		//construct
+		Breaker_ConstructTxCmdFrame(&tx_frame,BREAKER_CMD_ReportIDACK+j,id,NULL,0);
+
+		pRxBuffer = (uint8_t *)&tx_frame;
+		printf("send:\r\n");
+		for(i=0;i<BREAKER_FRAMELEN;i++)
+		{
+			//printf("%d=0x%02x ",i,*(pRxBuffer+i) );
+			printf("%02x ",*(pRxBuffer+i) );
+		}
+		printf("\r\n");
+
+		app_uart1_rs485_rxtx_io_high_is_tx();
+		
+		for(i=0;i<BREAKER_FRAMELEN;i++)
+		{
+			
+			uart1_sendchar(*(pRxBuffer+i));
+		}
+	}
+	return;
+	#endif
+	
+	//rec
+	app_uart1_rs485_rxtx_io_low_is_rx();
+	reset_uart1_rx_buffer();
+#if (UART1_RX_DMA ==1)
+	DMA_Enable(DMA1_Channel5,UART1_RX_BUFFER_LEN);//开启下一次DMA接收
+#endif
+
+
+	flags = EVENT_FLAGS_UART1;
+    // flags = osEventFlagsWait(evt_id_uart1, flags, osFlagsWaitAny, 3000);//osWaitForever
+    printf("*****rs485_broker evt_id_uart1 flags =0x%08x\r\n",flags);
+	//if(flags != osFlagsErrorTimeout)
+	{
+
+       //	if((flags&EVENT_FLAGS_UART1) == EVENT_FLAGS_UART1)
+        {
+         
+            //uart1_rec_rs485_response();
+			
+			pRxBuffer= ( char*)RxBuffer1;
+			uint8_t uart_buf_len = RxCounter1;
+			printf("rec:\r\n");
+			for(i=0;i<BREAKER_FRAMELEN;i++)
+			{
+				//printf("%d=0x%02x ",i,*(pRxBuffer+i) );
+				printf("%02x ",*(pRxBuffer+i) );
+			}
+			printf("\r\n");
+			
+			if((pRxBuffer[0]== BREAKER_FRAME_HEAD) && (pRxBuffer[1]== BREAKER_FRAMELEN))
+			{
+			
+				if(pRxBuffer[2]== BREAKER_CMD_OpenBreakerACK)
+				{
+					crc= Breaker_CRC8(pRxBuffer,BREAKER_FRAMELEN-1);
+					printf("frame.crc=0x%02x crc=0x%02x\r\n",pRxBuffer[BREAKER_FRAMELEN-1],crc);
+					if(pRxBuffer[BREAKER_FRAMELEN-1] !=crc)
+					{
+						
+						return ;
+					}
+				}
+				else 
+				{
+					printf("cmd type error\r\n");
+					return ;
+				}
+			}			
+			else 
+			{
+				printf("cmd header error\r\n");
+				return ;
+			}
+
+        }
+	}
+//	else 
+//	{
+	//	printf("cmd recv timeout\r\n");
+	//	return ;
+//	}
+
+}
+int app_rs485_broker_com_data(uint8_t ch,uint8_t cmd,uint8_t* pdata,uint8_t data_len)
+{
+
+    uint32_t flags=0;
+	uint8_t index=RS485_BROKER_NUM;
+	uint8_t* pRxBuffer = NULL;
+	
+    osEventFlagsId_t ef_id =NULL;
+	Breaker_Frame tx_frame ={0};
+	uint8_t crc =0;
+	int i =0;
+	if(ch > (RS485_BROKER_NUM-1))
+	{
+		printf("ch=%d not invlid\r\n",ch);
+		return -1;
+	}
+	for(i=0;i<RS485_BROKER_NUM;i++)
+	{
+		printf("i=%d used_flag=%d ",i,cur_rs485_broker_Info[i].used_flag);
+		printf("channel_index=%d ",cur_rs485_broker_Info[i].channel_index);
+		printf("broker_port_status=%d ",cur_rs485_broker_Info[i].broker_port_status);
+		printf("id=0x%02x 0x%02x 0x%02x 0x%02x ",
+			cur_rs485_broker_Info[i].id[0],cur_rs485_broker_Info[i].id[1],
+			cur_rs485_broker_Info[i].id[2],cur_rs485_broker_Info[i].id[3]);
+
+		printf("\r\n" );
+		
+		if(ch == cur_rs485_broker_Info[i].channel_index)
+		{
+			if(cur_rs485_broker_Info[i].used_flag == 1)
+			{
+			
+				index= i;
+				break;
+			}
+			else
+			{
+				printf("ch=%d not register\r\n",ch);
+				return -2;
+			}
+			
+		}
+	}
+	if(index == RS485_BROKER_NUM )
+	{
+		printf("ch=%d not find\r\n",ch);
+		return -3;
+	}
+
+    Breaker_ConstructTxCmdFrame(&tx_frame,cmd,cur_rs485_broker_Info[index].id,NULL,0);
+
+
+    printf("uart1 tx start=%d\r\n",get_curtime2());
+	
+	pRxBuffer = (uint8_t *)&tx_frame;
+	printf("send:\r\n");
+	for(i=0;i<BREAKER_FRAMELEN;i++)
+	{
+		//printf("%d=0x%02x ",i,*(pRxBuffer+i) );
+		printf("%02x ",*(pRxBuffer+i) );
+	}
+	printf("\r\n");
+	
+	app_uart1_rs485_rxtx_io_high_is_tx();
+	
+	for(i=0;i<BREAKER_FRAMELEN;i++)
+	{
+		
+		uart1_sendchar(*(pRxBuffer+i));
+	}
+
+	 app_uart1_rs485_rxtx_io_low_is_rx();
+	 reset_uart1_rx_buffer();
+#if (UART1_RX_DMA ==1)
+	 DMA_Enable(DMA1_Channel5,UART1_RX_BUFFER_LEN);//开启下一次DMA接收
+#endif
+
+	 ef_id = evt_id_uart1;
+	 flags = EVENT_FLAGS_UART1;
+    printf("*****dc_tx_rx_data wait flags =0x%08x %d\r\n",flags,get_curtime2());
+    flags = osEventFlagsWait(ef_id, flags, osFlagsWaitAll, UART1_RX_COMMAND_TIMEOUT);
+
+    if((int32_t)flags == osError)
+    {
+        printf("%s osError\r\n",__func__);
+        return -4;
+    }
+    else if((int32_t)flags == osErrorTimeout)
+    {
+        printf("%s osErrorTimeout=%d\r\n",__func__,get_curtime2());
+        return -5;
+    }
+    // else
+    //a {
+    printf("uart1 rx =%d from BROKER\r\n",get_curtime2());
+
+    if((flags&EVENT_FLAGS_UART1)  == EVENT_FLAGS_UART1)
+    {
+        printf("uart1 rx end\r\n");
+		pRxBuffer= ( char*)RxBuffer1;
+		uint8_t uart_buf_len = RxCounter1;
+		printf("rec:\r\n");
+		for(i=0;i<BREAKER_FRAMELEN;i++)
+		{
+			//printf("%d=0x%02x ",i,*(pRxBuffer+i) );
+			printf("%02x ",*(pRxBuffer+i) );
+		}
+		printf("\r\n");
+		
+		if((pRxBuffer[0]== BREAKER_FRAME_HEAD) && (pRxBuffer[1]== BREAKER_FRAMELEN))
+		{
+		
+			if(pRxBuffer[2]== (cmd+1))
+			{
+				crc= Breaker_CRC8(pRxBuffer,BREAKER_FRAMELEN-1);
+				printf("frame.crc=0x%02x crc=0x%02x\r\n",pRxBuffer[BREAKER_FRAMELEN-1],crc);
+				if(pRxBuffer[BREAKER_FRAMELEN-1] !=crc)
+				{
+					printf("crc Error\r\n");
+					return -6;
+				}
+			}
+			else 
+			{
+				printf("cmd type error\r\n");
+				return -7;
+			}
+		}			
+		else 
+		{
+			printf("cmd header error\r\n");
+			return -8;
+		}
+
+
+
+    }
+    else
+    {
+        printf("invalid flags=0x%08x\r\n",flags);
+        return -9;
+
+    }
+    return 0;
+
+
+
+}
+
+int app_rs485_broker_start_power(uint8_t port_num,uint16_t time_minute)
+{
+	uint8_t data[5]={0};
+	uint8_t data_len =0;
+	uint8_t dc1_2 = 0;
+
+	int ret =0;
+	
+	data[0] = port_num;//port num
+	data[1] = 0x00;
+	data[2] = 0x00;
+	
+	data[3] = (time_minute>>8) &0xff;//TIME/POWER
+	data[4] = time_minute &0xff;//TIME/POWER
+	data_len =5;
+	if((port_num >=0) && (port_num<=9))
+		dc1_2 =1;
+	else 
+		return -1;
+	ret = dc_com_data( dc1_2,DIANCHUAN_CMD_StartPower,data, data_len);
+	return ret;
+
+}
+
+

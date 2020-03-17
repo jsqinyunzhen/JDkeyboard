@@ -1,0 +1,501 @@
+/**
+  ******************************************************************************
+  * @file    GPIO/JTAG_Remap/main.c 
+  * @author  MCD Application Team
+  * @version V3.5.0
+  * @date    08-April-2011
+  * @brief   Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
+  * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
+  * TIME. AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY
+  * DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING
+  * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
+  * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
+  *
+  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
+  ******************************************************************************
+  */ 
+
+/* Includes ------------------------------------------------------------------*/
+#include "stm32f10x.h"
+#include "project_config.h"
+
+#include "st_printf.h"
+#include "st_gpio.h"
+void gpio_led_init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStructure={0};
+  uint8_t gpio_value = 0;
+
+  #if(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32PRODUCT1 )
+
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12|GPIO_Pin_14;				     //LED1  V6	   //将V6,V7,V8 配置为通用推挽输出  
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;			 //口线翻转速度为50MHz
+  GPIO_Init(GPIOE, &GPIO_InitStructure);					 
+
+  gpio_value = GPIO_ReadOutputDataBit(GPIOE,GPIO_Pin_12);
+  if(gpio_value == Bit_SET)
+  {
+	uart_printf("GPIO_Pin_12 is h");
+  }
+  else
+  {
+	uart_printf("GPIO_Pin_12 is l");
+  }	  
+
+	gpio_value = GPIO_ReadOutputDataBit(GPIOE,GPIO_Pin_14);
+	if(gpio_value == Bit_SET)
+	{
+	uart_printf("GPIO_Pin_14 is h");
+	}
+	else
+	{
+	uart_printf("GPIO_Pin_14 is l");
+	}	
+	#elif(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32DEMO)
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;				   //LED1  V6	 //将V6,V7,V8 配置为通用推挽输出  
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		   //口线翻转速度为50MHz
+	GPIO_Init(GPIOB, &GPIO_InitStructure);					   
+	
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6|GPIO_Pin_3;	   //LED2, LED3    V7 V8
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
+	
+	
+	gpio_value = GPIO_ReadOutputDataBit(GPIOB,GPIO_Pin_5);
+	if(gpio_value == Bit_SET)
+	{
+	  uart_printf("GPIO_Pin_5 is h");
+	}
+	else
+	{
+	  uart_printf("GPIO_Pin_5 is l");
+	}	
+	
+	gpio_value = GPIO_ReadOutputDataBit(GPIOD,GPIO_Pin_6);
+	if(gpio_value == Bit_SET)
+	{
+	  uart_printf("GPIO_Pin_6 is h");
+	}
+	else
+	{
+	  uart_printf("GPIO_Pin_6 is l");
+	}	 
+	
+	  gpio_value = GPIO_ReadOutputDataBit(GPIOD,GPIO_Pin_3);
+	if(gpio_value == Bit_SET)
+	{
+	  uart_printf("GPIO_Pin_3 is h");
+	}
+	else
+	{
+	  uart_printf("GPIO_Pin_3 is l");
+	}
+
+	#endif
+ 
+}
+void gpio_led_on(void)
+{
+	#if(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32DEMO)
+	GPIO_WriteBit(GPIOB, GPIO_Pin_5, Bit_SET);
+	GPIO_WriteBit(GPIOD, GPIO_Pin_6, Bit_SET);
+	//GPIO_WriteBit(GPIOD, GPIO_Pin_3, 1);
+	GPIO_SetBits(GPIOD, GPIO_Pin_3);
+	#elif(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32PRODUCT1 )
+	GPIO_WriteBit(GPIOE, GPIO_Pin_12, Bit_RESET);//yellow
+	GPIO_WriteBit(GPIOE, GPIO_Pin_14, Bit_RESET);
+	#endif
+}
+
+void gpio_led_off(void)
+{
+	#if(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32DEMO)
+	GPIO_WriteBit(GPIOB, GPIO_Pin_5, Bit_RESET);
+	GPIO_WriteBit(GPIOD, GPIO_Pin_6, Bit_RESET);
+//	GPIO_WriteBit(GPIOD, GPIO_Pin_3, 0);
+	GPIO_ResetBits(GPIOD, GPIO_Pin_3);
+	#elif(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32PRODUCT1 )
+	GPIO_WriteBit(GPIOE, GPIO_Pin_12, Bit_SET);
+	GPIO_WriteBit(GPIOE, GPIO_Pin_14, Bit_SET);
+	#endif
+}
+void gpio_led_tog(void)
+{
+	#if(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32DEMO)
+	GPIO_WriteBit(GPIOB, GPIO_Pin_5, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOB, GPIO_Pin_5)));
+	GPIO_WriteBit(GPIOD, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOD, GPIO_Pin_6)));
+	GPIO_WriteBit(GPIOD, GPIO_Pin_3, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOD, GPIO_Pin_3)));
+	#elif(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32PRODUCT1 )
+	#endif
+}
+
+void EXTI5_Config(void)
+{
+	EXTI_InitTypeDef   EXTI_InitStructure;
+	GPIO_InitTypeDef   GPIO_InitStructure;
+	NVIC_InitTypeDef   NVIC_InitStructure;
+
+  /* Enable GPIOA clock */
+ // RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+  
+  /* Configure PC.05 pin as input floating */
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;//GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+
+  /* Connect EXTI0 Line to PC.05 pin */
+  GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource5);
+
+  /* Configure EXTI0 line */
+  EXTI_InitStructure.EXTI_Line = EXTI_Line5;//EXTI_Line0;
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;//EXTI_Trigger_Rising;  
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+
+  /* Enable and set EXTI0 Interrupt to the lowest priority */
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;//EXTI0_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+  
+
+}
+void EXTI2_Config(void)
+{
+	EXTI_InitTypeDef   EXTI_InitStructure;
+	GPIO_InitTypeDef   GPIO_InitStructure;
+	NVIC_InitTypeDef   NVIC_InitStructure;
+  /* Configure PG.08 pin as input floating */
+	 GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;//|GPIO_Pin_3;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;//GPIO_Mode_IN_FLOATING;
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+  /* Enable AFIO clock */
+ // RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+  /* Connect EXTI8 Line to PG.08 pin */
+  GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource2);//|GPIO_PinSource3);
+
+  /* Configure EXTI8 line */
+  EXTI_InitStructure.EXTI_Line = EXTI_Line2;
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+
+  /* Enable and set EXTI9_5 Interrupt to the lowest priority */
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI2_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+
+  NVIC_Init(&NVIC_InitStructure);
+}
+void EXTI3_Config(void)
+{
+	EXTI_InitTypeDef   EXTI_InitStructure;
+	GPIO_InitTypeDef   GPIO_InitStructure;
+	NVIC_InitTypeDef   NVIC_InitStructure;
+  /* Configure PG.08 pin as input floating */
+	 GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;//|GPIO_Pin_3;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;//GPIO_Mode_IN_FLOATING;
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+  /* Enable AFIO clock */
+ // RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+  /* Connect EXTI8 Line to PG.08 pin */
+  GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource3);//|GPIO_PinSource3);
+
+  /* Configure EXTI8 line */
+  EXTI_InitStructure.EXTI_Line = EXTI_Line3;
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+
+  /* Enable and set EXTI9_5 Interrupt to the lowest priority */
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI3_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+
+  NVIC_Init(&NVIC_InitStructure);
+}
+void gpio_key_init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStructure;
+  uint8_t gpio_value = 0;
+	
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+  #if(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32DEMO)   
+  /* K1 ???????PC5 */
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;					    //????
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+  /* K2 ???????PC2 */
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;					    //????
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+  
+  /* K3 ???????PC3 */
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;					    //????
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+  
+  /* K4 ???????PE6 */ 
+  //reset key
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;					    //????
+  GPIO_Init(GPIOE, &GPIO_InitStructure);	
+  #elif (HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32PRODUCT1) 
+   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;				     //LED1  V6	   //将V6,V7,V8 配置为通用推挽输出  
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+  //GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;			 //口线翻转速度为50MHz
+  GPIO_Init(GPIOE, &GPIO_InitStructure);					 
+
+	
+	#endif
+ 
+	
+}
+
+/****************************************************************************
+* ?    ?:void NVIC_Configuration(void)
+* ?    ?:?????
+* ????:?
+* ????:?
+* ?    ?:
+* ????:? 
+****************************************************************************/ 
+#if 0
+void gpio_key_NVIC_Configuration(void)
+{
+  NVIC_InitTypeDef NVIC_InitStructure;
+  EXTI_InitTypeDef EXTI_InitStructure;
+  /* Configure one bit for preemption priority */
+  /* ???? ?????????????,???????????   ????1, 3 
+   0?:  ??????0?, ??????4?
+   1?:  ??????1?, ??????3?
+   2?:  ??????2?, ??????2?
+   3?:  ??????3?, ??????1?
+   4?:  ??????4?, ??????0?  */
+    
+  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
+  
+  /* Enable the EXTI9-5 Interrupt */
+  NVIC_InitStructure.NVIC_IRQChannel =EXTI9_5_IRQn;				 //????9-5
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;	     //????? 0
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;			 //????1  
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;				 //??
+  NVIC_Init(&NVIC_InitStructure);
+
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI2_IRQn;				 //????2
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;	     //????? 0
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;			 //????2  
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;				 //??
+  NVIC_Init(&NVIC_InitStructure);
+
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI3_IRQn;				 //????3
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;	     //????? 0
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;			 //????0  
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;				 //??
+  NVIC_Init(&NVIC_InitStructure);
+
+  //????AFIO?????????AFIO_EXTICR1,????EXTI5?????????PC5?
+  GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource5);     //??????AFIO--ETXI9-5
+  //????AFIO?????????AFIO_EXTICR1,????EXTI2?????????PC2?
+  GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource2);     //??????AFIO--ETXI2
+  //????AFIO?????????AFIO_EXTICR1,????EXTI3?????????PC3?
+  GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource3);     //??????AFIO--ETXI3
+
+  EXTI_InitStructure.EXTI_Line = EXTI_Line5;						//PC5 ????K1 ????
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;			    //????
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;		    //?????
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+	
+  EXTI_InitStructure.EXTI_Line = EXTI_Line2;						//PC2 ????K2 ????
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;			    //????
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;		    //?????
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+
+  EXTI_InitStructure.EXTI_Line = EXTI_Line3;						//PC3 ????K3 ????
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;			    //????
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;		    //?????
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+}
+#endif
+void gpio_key_exti_config(void)
+{	
+//	GPIO_InitTypeDef  GPIO_InitStruct;                          //初始化GPIO结构体	
+	EXTI_InitTypeDef  EXTI_InitStruct;                         //初始化EXTI结构体				
+/*
+	// 初始化GPIO	     
+	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_5;				      
+	//选脚GPIO_Pin_0	
+	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN_FLOATING;	       
+	//浮空输入		
+	GPIO_Init(GPIOC, &GPIO_InitStruct);		        
+	//初始化GPIOA端口		
+	*/
+	#if(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32DEMO) 
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource2);
+	//选择PA端口0脚 PA0		
+	EXTI_InitStruct.EXTI_Line = EXTI_Line2;                    
+	//选择Line0	
+	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;						
+	//中断模式	
+	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Falling;					
+	//上升沿触发	
+	EXTI_InitStruct.EXTI_LineCmd = ENABLE;											
+	//使能中断屏蔽事件寄存器	
+	EXTI_Init(&EXTI_InitStruct);	
+
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource3);
+	//选择PA端口0脚 PA0		
+	EXTI_InitStruct.EXTI_Line = EXTI_Line3;                    
+	//选择Line0	
+	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;						
+	//中断模式	
+	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Falling;					
+	//上升沿触发	
+	EXTI_InitStruct.EXTI_LineCmd = ENABLE;											
+	//使能中断屏蔽事件寄存器	
+	EXTI_Init(&EXTI_InitStruct);	
+
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource5);
+	//选择PA端口0脚 PA0		
+	EXTI_InitStruct.EXTI_Line = EXTI_Line5;                    
+	//选择Line0	
+	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;						
+	//中断模式	
+	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Falling;					
+	//上升沿触发	
+	EXTI_InitStruct.EXTI_LineCmd = ENABLE;											
+	//使能中断屏蔽事件寄存器	
+	EXTI_Init(&EXTI_InitStruct);	
+	 #elif(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32PRODUCT1)
+	 GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource10);
+	 //选择PA端口0脚 PA0	 
+	 EXTI_InitStruct.EXTI_Line = EXTI_Line10;					
+	 //选择Line0 
+	 EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;						 
+	 //中断模式  
+	 EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Falling;					 
+	 //上升沿触发	 
+	 EXTI_InitStruct.EXTI_LineCmd = ENABLE; 										 
+	 //使能中断屏蔽事件寄存器	 
+	 EXTI_Init(&EXTI_InitStruct);
+
+	#endif
+}
+
+void gpio_key_value(void)
+{
+  uint8_t gpio_value = 0;
+   #if(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32DEMO) 
+  gpio_value = GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_5);
+  if(gpio_value == Bit_SET)
+  {
+	uart_printf("GPIO_Pin_5 is h");
+  }
+  else
+  {
+	uart_printf("GPIO_Pin_5 is l");
+  }	  
+
+  gpio_value = GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_2);
+  if(gpio_value == Bit_SET)
+  {
+	uart_printf("GPIO_Pin_2 is h");
+  }
+  else
+  {
+	uart_printf("GPIO_Pin_2 is l");
+  }	   
+ 
+    gpio_value = GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_3);
+  if(gpio_value == Bit_SET)
+  {
+	uart_printf("GPIO_Pin_3 is h");
+  }
+  else
+  {
+	uart_printf("GPIO_Pin_3 is l");
+  }	 
+ #elif(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32PRODUCT1)
+    gpio_value = GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_10);
+  if(gpio_value == Bit_SET)
+  {
+	//uart_printf("GPIO_Pin_10 is h");
+  }
+  else
+   {
+	//uart_printf("GPIO_Pin_10 is l");
+  } 
+  #endif
+}
+
+
+void gpio_smoke_detect_init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStructure;
+  uint8_t gpio_value = 0;
+	
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;					    //????
+  GPIO_Init(GPIOD, &GPIO_InitStructure);
+}
+void gpio_smoke_detect_exti_config(void)
+{
+	EXTI_InitTypeDef  EXTI_InitStruct;  
+#if(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32PRODUCT1)
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource9);
+	//选择PA端口0脚 PA0 	
+	EXTI_InitStruct.EXTI_Line = EXTI_Line9;				   
+	//选择Line0 
+	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;						
+	//中断模式	
+	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Falling;					
+	//上升沿触发	
+	EXTI_InitStruct.EXTI_LineCmd = ENABLE;											
+	//使能中断屏蔽事件寄存器	
+	EXTI_Init(&EXTI_InitStruct);
+#endif
+}
+void gpio_smoke_detect_value(void)
+{
+  uint8_t gpio_value = 0; 
+ #if(HW_BOARD_TYPE  ==  HW_BOARD_TYPE_IS_STM32PRODUCT1)
+    gpio_value = GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_9);
+  if(gpio_value == Bit_SET)
+  {
+	printf("GPIO_Pin_9 is h\r\n");
+  }
+  else
+   {
+	printf("GPIO_Pin_9 is l\r\n");
+  } 
+  #endif
+  
+}
+
+/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
