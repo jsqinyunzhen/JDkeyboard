@@ -1459,6 +1459,10 @@ uint8_t charge_mg_set_on(uint8_t ch, uint32_t charge_tm, uint16_t max_w, uint16_
         return 1;
     if(charge_Info.dc_port_status[ch] != PORT_FREE)
     {
+        if(charge_mode == CHARGE_MODE_BROKER )
+        {
+            charge_Info.max_watter[ch] = max_w;
+        }
         printf("dc_port_status[%d]=0x%02x\r\n",ch,charge_Info.dc_port_status[ch]);
         return 1;
     }
@@ -1621,7 +1625,7 @@ uint8_t charge_mg_set_on(uint8_t ch, uint32_t charge_tm, uint16_t max_w, uint16_
 }
 void reset_dc_port_para(uint8_t index)
 {
-	printf("reset_dc_port_para %d\r\n",index);
+	//printf("reset_dc_port_para %d\r\n",index);
     charge_Info.dc_port_status[index] = PORT_FREE;
     charge_Info.max_watter[index] = 0;
     charge_Info.min_watter[index] = 0;

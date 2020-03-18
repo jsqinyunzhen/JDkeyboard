@@ -1300,6 +1300,13 @@ void handle_uart_debug_cmd(void)
 	#endif
 		goto out;
 	}
+    ret=strncmp(uart_buf,"uart4_AT+CSQ",12);
+	if(ret==0)
+	{
+        ret = dx_get_lte_signalQuality();
+        printf("uart4 dx_get_lte_signal=%d\r\n",ret);
+		goto out;
+	}
 	//UARA1 FOR UART2 4G TEST
 	len = strlen(MODULE_4G_COMMAND_PREFIX);
 	//printf("MODULE_4G_COMMAND_PREFIX=%d\r\n",strlen(MODULE_4G_COMMAND_PREFIX));
@@ -1312,7 +1319,7 @@ void handle_uart_debug_cmd(void)
 		//printf("at command uart_buf=%s ,RxCounter1-len=%d\r\n",uart_buf,RxCounter1-len);
 		//printf("RxBuffer1=%s, =%d\r\n",RxBuffer1,(RxCounter1-len));
 		// =8cmd=_AT+GMI
-		uart_buf = ( char*)(uart_buf+strlen(MODULE_4G_COMMAND_PREFIX));
+		uart_buf = ( char*)(RxBuffer1+strlen(MODULE_4G_COMMAND_PREFIX));
 		printf("uart_buf=%s,len=%d\r\n",uart_buf,RxCounter1-len);
 		//printf("strlen(AT_GSN)=%d\r\n",strlen(AT_GSN));
 		ret=strncmp(uart_buf,AT_GSN,strlen(AT_GSN)-1);

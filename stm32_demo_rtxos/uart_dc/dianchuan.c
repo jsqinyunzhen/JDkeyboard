@@ -1891,9 +1891,9 @@ int dc_start_power(uint8_t port_num,uint16_t time_minute)
     data[3] = (time_minute>>8) &0xff;//TIME/POWER
     data[4] = time_minute &0xff;//TIME/POWER
     data_len =5;
-    if(((int)port_num >= 0) && (port_num<=9))
+    if(((int)port_num >= 1) && (port_num<=10))
         dc1_2 =1;
-    else if((port_num >=10) && (port_num<=19))
+    else if((port_num >=11) && (port_num<=20))
         dc1_2 = 2;
     else
         return -1;
@@ -1909,9 +1909,9 @@ int dc_stop_power(uint8_t port_num)
     int ret =0;
     data[0] = port_num;//port num
     data_len =1;
-    if(((int)port_num >= 0) && (port_num<=9))
+    if(((int)port_num >= 1) && (port_num <= 10))
         dc1_2 =1;
-    else if((port_num >=10) && (port_num<=19))
+    else if((port_num >= 11) && (port_num <= 20))
         dc1_2 = 2;
     else
         return -1;
@@ -1933,9 +1933,9 @@ int dc_port_x_status(uint8_t port_num,uint16_t* pport_status)
     DianChuan_Frame *pFrame = &DianChuanRxFrame;
     uint16_t port_status =0;
 
-    if(((int)port_num >= 0) && (port_num<=9))
+    if(((int)port_num >= 1) && (port_num<=10))
         dc1_2 =1;
-    else if((port_num >=10) && (port_num<=19))
+    else if((port_num >=11) && (port_num<=20))
         dc1_2 = 2;
     else
         return -1;

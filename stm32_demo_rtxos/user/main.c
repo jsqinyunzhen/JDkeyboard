@@ -423,8 +423,6 @@ check_module4g_init:
     data.username.cstring = "testuser";
     data.password.cstring = "testpassword";
 #else
-    charge_mg_init();
-
     mqtt_tcp_socket = transport_open("\"mqtt.jindoo.jopool.net\"",MQTT_PORT);
     printf("mqtt_tcp_socket %d\r\n",mqtt_tcp_socket);
     if(mqtt_tcp_socket < 0)
@@ -446,6 +444,7 @@ check_module4g_init:
     //memcpy(g_imei,DEVICE_TEST_UUID,strlen(DEVICE_TEST_UUID));
     //  memcpy(g_imei,MODULE4G_IMEI_SN_ERROR_TEST,strlen(MODULE4G_IMEI_SN_ERROR_TEST));
     mqtt_set(g_imei);
+    charge_mg_init();
     printf("client_id = %s\r\n",client_id);
     sprintf(will_topics_str, WILL_STR, client_id);
     sprintf(will_topics, WILL_TOPIC, client_id);

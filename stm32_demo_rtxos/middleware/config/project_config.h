@@ -14,7 +14,7 @@
 
 
 
-#define  HWSERIAL_SOFTVERSION    0x313C
+#define  HWSERIAL_SOFTVERSION    0x313D
 
 #define  VER_PRO_NET         "1.0.1.12"
 
@@ -142,7 +142,7 @@ extern osEventFlagsId_t evt_id_app;
 						)
 	
 #define  PRINTF_SUPPORT 1
-#define  KB_DEBUG 1
+//#define  KB_DEBUG 1
 #define  PRINTF_UART_ID_1 1
 #define  PRINTF_UART_ID_4 4
 
